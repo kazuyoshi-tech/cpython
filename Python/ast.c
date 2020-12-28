@@ -395,6 +395,10 @@ validate_stmt(stmt_ty stmt)
         return validate_expr(stmt->v.If.test, Load) &&
             validate_body(stmt->v.If.body, "If") &&
             validate_stmts(stmt->v.If.orelse);
+    case Unless_kind:
+        return validate_expr(stmt->v.Unless.test, Load) &&
+            validate_body(stmt->v.Unless.body, "Unless") &&
+            validate_stmts(stmt->v.Unless.orelse);
     case With_kind:
         if (!validate_nonempty_seq(stmt->v.With.items, "items", "With"))
             return 0;

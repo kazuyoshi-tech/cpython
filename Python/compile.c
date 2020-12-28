@@ -1605,6 +1605,10 @@ find_ann(asdl_stmt_seq *stmts)
             res = find_ann(st->v.If.body) ||
                   find_ann(st->v.If.orelse);
             break;
+        case Unless_kind:
+            res = find_ann(st->v.Unless.body) ||
+                  find_ann(st->v.Unless.orelse);
+            break;
         case With_kind:
             res = find_ann(st->v.With.body);
             break;
@@ -2728,6 +2732,38 @@ compiler_if(struct compiler *c, stmt_ty s)
 }
 
 static int
+compiler_unless(struct compiler *c, stmt_ty s)
+{
+    basicblock *end, *next;
+    assert(s->kind == Unless_kind);
+    end = compiler_new_block(c);
+    if (end == NULL) {
+        return 0;
+    }
+    if (asdl_seq_LEN(s->v.Unless.orelse)) {
+        next = compiler_new_block(c);
+        if (next == NULL) {
+            return 0;
+        }
+    }
+    else {
+        next = end;
+    }
+    if (!compiler_jump_if(c, s->v.Unless.test, next, 0)) {
+        return 0;
+    }
+    //VISIT_SEQ(c, stmt, s->v.Unless.body);
+    VISIT_SEQ(c, stmt, s->v.Unless.orelse);
+    if (asdl_seq_LEN(s->v.Unless.body)) {
+        ADDOP_JUMP(c, JUMP_FORWARD, end);
+        compiler_use_next_block(c, next);
+        VISIT_SEQ(c, stmt, s->v.Unless.body);
+    }
+    compiler_use_next_block(c, end);
+    return 1;
+}
+
+static int
 compiler_for(struct compiler *c, stmt_ty s)
 {
     basicblock *start, *body, *cleanup, *end;
@@ -3390,6 +3426,8 @@ compiler_visit_stmt(struct compiler *c, stmt_ty s)
         return compiler_while(c, s);
     case If_kind:
         return compiler_if(c, s);
+    case Unless_kind:
+        return compiler_unless(c, s);
     case Raise_kind:
         n = 0;
         if (s->v.Raise.exc) {

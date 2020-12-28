@@ -80,6 +80,7 @@ simple_stmt[stmt_ty] (memo):
 compound_stmt[stmt_ty]:
     | &('def' | '@' | ASYNC) function_def
     | &'if' if_stmt
+    | &'unless' unless_stmt
     | &('class' | '@') class_def
     | &('with' | ASYNC) with_stmt
     | &('for' | ASYNC) for_stmt
@@ -169,6 +170,16 @@ elif_stmt[stmt_ty]:
     | 'elif' a=named_expression ':' b=block c=elif_stmt {
         _Py_If(a, b, CHECK(asdl_stmt_seq*, _PyPegen_singleton_seq(p, c)), EXTRA) }
     | 'elif' a=named_expression ':' b=block c=[else_block] { _Py_If(a, b, c, EXTRA) }
+else_block[asdl_stmt_seq*]: 'else' ':' b=block { b }
+
+unless_stmt[stmt_ty]:
+    | 'unless' a=named_expression ':' b=block c=elunless_stmt {
+        _Py_Unless(a, b, CHECK(asdl_stmt_seq*, _PyPegen_singleton_seq(p, c)), EXTRA) }
+    | 'unless' a=named_expression ':' b=block c=[else_block] { _Py_Unless(a, b, c, EXTRA) }
+elunless_stmt[stmt_ty]:
+    | 'elunless' a=named_expression ':' b=block c=elunless_stmt {
+        _Py_Unless(a, b, CHECK(asdl_stmt_seq*, _PyPegen_singleton_seq(p, c)), EXTRA) }
+    | 'elunless' a=named_expression ':' b=block c=[else_block] { _Py_Unless(a, b, c, EXTRA) }
 else_block[asdl_stmt_seq*]: 'else' ':' b=block { b }
 
 while_stmt[stmt_ty]:

@@ -684,6 +684,11 @@ astfold_stmt(stmt_ty node_, PyArena *ctx_, _PyASTOptimizeState *state)
         CALL_SEQ(astfold_stmt, stmt, node_->v.If.body);
         CALL_SEQ(astfold_stmt, stmt, node_->v.If.orelse);
         break;
+    case Unless_kind:
+        CALL(astfold_expr, expr_ty, node_->v.Unless.test);
+        CALL_SEQ(astfold_stmt, stmt, node_->v.Unless.body);
+        CALL_SEQ(astfold_stmt, stmt, node_->v.Unless.orelse);
+        break;
     case With_kind:
         CALL_SEQ(astfold_withitem, withitem, node_->v.With.items);
         CALL_SEQ(astfold_stmt, stmt, node_->v.With.body);
